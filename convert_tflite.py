@@ -15,17 +15,18 @@ flags.DEFINE_string('quantize_mode', 'float32', 'quantize mode (int8, float16, f
 flags.DEFINE_string('dataset', "/Volumes/Elements/data/coco_dataset/coco/5k.txt", 'path to dataset')
 
 def representative_data_gen():
-  fimage = open(FLAGS.dataset).read().split()
+  # fimage = open(FLAGS.dataset).read().split()
   for input_value in range(10):
-    if os.path.exists(fimage[input_value]):
-      original_image=cv2.imread(fimage[input_value])
-      original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
-      image_data = utils.image_preprocess(np.copy(original_image), [FLAGS.input_size, FLAGS.input_size])
-      img_in = image_data[np.newaxis, ...].astype(np.float32)
-      print("calibration image {}".format(fimage[input_value]))
-      yield [img_in]
-    else:
-      continue
+    # if os.path.exists(fimage[input_value]):
+    #   original_image=cv2.imread(fimage[input_value])
+    #   original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
+    #   image_data = utils.image_preprocess(np.copy(original_image), [FLAGS.input_size, FLAGS.input_size])
+    #   img_in = image_data[np.newaxis, ...].astype(np.float32)
+    #   print("calibration image {}".format(fimage[input_value]))
+    #   yield [img_in]
+    # else:
+    #   continue
+    yield [np.random.uniform(size=(1, FLAGS.input_size, FLAGS.input_size, 3)).astype(np.float32)]
 
 def save_tflite():
   converter = tf.lite.TFLiteConverter.from_saved_model(FLAGS.weights)
@@ -38,6 +39,9 @@ def save_tflite():
   elif FLAGS.quantize_mode == 'int8':
     converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
     converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    converter.inference_input_type = tf.int8
+    converter.inference_output_type = tf.int8
+    converter.experimental_new_quantizer = False
     converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS, tf.lite.OpsSet.SELECT_TF_OPS]
     converter.allow_custom_ops = True
     converter.representative_dataset = representative_data_gen
@@ -69,7 +73,7 @@ def demo():
 
 def main(_argv):
   save_tflite()
-  demo()
+  # demo()
 
 if __name__ == '__main__':
     try:
